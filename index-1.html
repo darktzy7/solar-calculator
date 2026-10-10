@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solar Calculator</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0b1020">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1020; --panel:#121a30; --field:#0d1428; --line:#24304f;
+  --text:#e9eefc; --muted:#8b97b8; --accent:#ffa400; --accent2:#f26a0a; --ok:#3ddc97;
+  --display:'Orbitron','Segoe UI',system-ui,sans-serif;
+  --body:'Rajdhani','Segoe UI',system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;font-weight:500}
+.wrap{max-width:560px;margin:0 auto;padding:16px 14px 90px}
+header{border-bottom:2px solid var(--accent);padding:6px 2px 14px;margin-bottom:14px}
+h1{font-family:var(--display);font-size:20px;margin:0 0 4px;letter-spacing:.5px}
+header p{margin:0;color:var(--muted);font-size:14px;line-height:1.35}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;position:relative}
+.card h2{font-family:var(--display);font-size:12px;color:var(--accent);margin:0 0 12px;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.card h2::before{content:"";width:3px;height:14px;background:var(--accent);border-radius:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+.field{position:relative}
+input,select{width:100%;height:44px;background:var(--field);border:1px solid var(--line);border-radius:10px;color:var(--text);font:600 16px var(--body);padding:0 44px 0 12px;appearance:none;-webkit-appearance:none}
+select{padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 19px,calc(100% - 11px) 19px;background-size:5px 5px;background-repeat:no-repeat}
+input::placeholder{color:#4b5778}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,164,0,.25)}
+.unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);pointer-events:none;font-weight:700}
+.field.sel .unit{right:30px}
+.panel-art{position:absolute;right:14px;top:54px;width:130px;opacity:.95;pointer-events:none}
+.cta{width:100%;height:50px;border:0;border-radius:12px;font:700 15px var(--display);letter-spacing:2px;color:#1a0f00;background:linear-gradient(90deg,var(--accent2),var(--accent));box-shadow:0 6px 22px rgba(242,106,10,.35);cursor:pointer}
+.cta:active{transform:translateY(1px)}
+.cta:focus-visible{outline:2px solid #fff;outline-offset:2px}
+#results{margin-top:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{background:var(--field);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 12px;font:600 13px var(--body);cursor:pointer}
+.chip:active{border-color:var(--accent)}
+.chip:focus-visible,.rm:focus-visible,.ghost:focus-visible,.use:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.app-top{display:flex;gap:8px;margin-bottom:8px}
+.app input{padding-right:10px;height:40px;font-size:15px}
+.app-grid{display:grid;grid-template-columns:1fr 1.3fr 1fr 1fr;gap:8px}
+.app-grid label{font-size:11px;margin-bottom:3px}
+.rm{width:40px;height:40px;flex:none;background:none;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:14px;cursor:pointer}
+.ghost{width:100%;height:40px;background:none;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font:600 14px var(--body);cursor:pointer;margin-bottom:12px}
+.app-tot{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;margin-bottom:10px}
+.use{width:100%;height:44px;border:1px solid var(--accent);border-radius:10px;background:rgba(255,164,0,.1);color:var(--accent);font:700 13px var(--display);letter-spacing:1px;cursor:pointer}
+.empty{color:var(--muted);font-size:14px;margin:0 0 12px;line-height:1.4}
+.err{background:#3a1420;border:1px solid #7a2a3f;color:#ffb3c4;padding:10px 12px;border-radius:10px;font-size:14px;margin-top:12px}
+.res{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.res h3{font-family:var(--display);font-size:12px;margin:0 0 10px;color:var(--accent);letter-spacing:1px}
+.big{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.1}
+.big small{font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
+.sub{color:var(--muted);font-size:14px;margin-top:6px;line-height:1.4}
+.row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:15px}
+.row:first-of-type{border-top:0}
+.row span:first-child{color:var(--muted)}
+.row b{text-align:right}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:4px}
+.view{display:none}.view.on{display:block}
+.about p{line-height:1.5;color:#c9d2ec;margin:0 0 10px}
+.about li{margin-bottom:6px;color:#c9d2ec;line-height:1.4}
+nav{position:fixed;left:0;right:0;bottom:0;background:#0a0f1e;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;background:none;border:0;color:var(--muted);font:700 12px var(--display);padding:12px 0;cursor:pointer;letter-spacing:1px}
+nav button.on{color:var(--accent)}
+nav button:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Solar System Calculator</h1>
+    <p>Alamin ang laki ng solar panel, battery bank, at inverter para sa off-grid setup mo.</p>
+  </header>
+
+  <section id="calc" class="view on">
+    <div class="card">
+      <h2>APPLIANCE LIST (optional)</h2>
+      <p class="empty">Pumili ng appliance o magdagdag ng sarili. Ilagay ang oras at minuto ng gamit kada araw (halimbawa, 2 oras 30 minuto).</p>
+      <div class="chips" id="chips"></div>
+      <div id="appList"></div>
+      <button class="ghost" id="addApp" type="button">+ Magdagdag ng sarili</button>
+      <div class="app-tot"><span>Total</span><b id="appTot">0 kWh/day · 0 W peak</b></div>
+      <button class="use" id="useApp" type="button">GAMITIN SA CALCULATOR</button>
+    </div>
+
+    <div class="card">
+      <h2>LOAD &amp; SOLAR INPUT</h2>
+      <div class="grid">
+        <div class="field full">
+          <label for="kwh">Daily Energy Consumption</label>
+          <input id="kwh" type="number" inputmode="decimal" step="any" min="0" placeholder="e.g. 5">
+          <span class="unit">kWh/day</span>
+        </div>
+        <div class="field">
+          <label for="psh">Peak Sun Hours</label>
+          <input id="psh" type="number" inputmode="decimal" step="any" min="0" value="4.5">
+          <span class="unit">hrs</span>
+        </div>
+        <div class="field">
+          <label for="loss">System Efficiency</label>
+          <input id="loss" type="number" inputmode="decimal" step="any" min="1" max="100" value="80">
+          <span class="unit">%</span>
+        </div>
+        <div class="field full">
+          <label for="wp">Solar Panel Wattage</label>
+          <input id="wp" type="number" inputmode="decimal" step="any" min="0" placeholder="e.g. 550">
+          <span class="unit">Wp</span>
+        </div>
+        <div class="field sel">
+          <label for="sv">System Voltage</label>
+          <select id="sv"><option value="12">12V</option><option value="24">24V</option><option value="48" selected>48V</option></select>
+        </div>
+        <div class="field">
+          <label for="peak">Peak Load (optional)</label>
+          <input id="peak" type="number" inputmode="decimal" step="any" min="0" placeholder="e.g. 3000">
+          <span class="unit">W</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>BATTERY CONFIGURATION</h2>
+      <div class="grid">
+        <div class="field sel">
+          <label for="bv">Battery Voltage</label>
+          <select id="bv"><option value="12">12</option><option value="24">24</option><option value="48" selected>48</option></select>
+          <span class="unit">V</span>
+        </div>
+        <div class="field">
+          <label for="bah">Battery Capacity</label>
+          <input id="bah" type="number" inputmode="decimal" step="any" min="0" value="200">
+          <span class="unit">Ah</span>
+        </div>
+        <div class="field">
+          <label for="dod">Depth of Discharge</label>
+          <input id="dod" type="number" inputmode="decimal" step="any" min="1" max="100" value="80">
+          <span class="unit">%</span>
+        </div>
+        <div class="field">
+          <label for="days">Backup Days</label>
+          <input id="days" type="number" inputmode="decimal" step="any" min="0" value="1">
+          <span class="unit">days</span>
+        </div>
+        <div class="field">
+          <label for="bhrs">Backup Hours</label>
+          <input id="bhrs" type="number" inputmode="decimal" step="any" min="0" max="23" placeholder="0">
+          <span class="unit">hrs</span>
+        </div>
+        <div class="field">
+          <label for="bmin">Backup Minutes</label>
+          <input id="bmin" type="number" inputmode="decimal" step="any" min="0" max="59" placeholder="0">
+          <span class="unit">min</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="cta" id="go" type="button">CALCULATE</button>
+    <div id="results" aria-live="polite"></div>
+  </section>
+
+  <section id="about" class="view about">
+    <div class="card">
+      <h2>ABOUT</h2>
+      <p>Simpleng calculator ito para sa pag-size ng off-grid solar system. Gabay lang ang resulta at panimulang batayan; ipa-check pa rin sa lisensyadong electrician o solar installer bago bumili.</p>
+      <ul>
+        <li><b>Solar array</b> = Daily energy ÷ efficiency ÷ peak sun hours</li>
+        <li><b>Battery bank</b> = Daily energy × backup days ÷ DoD</li>
+        <li><b>Batteries</b> = (System V ÷ battery V) in series × parallel strings</li>
+        <li><b>Charge controller</b> = Array W ÷ system V × 1.25 safety</li>
+        <li><b>Inverter</b> = Peak load × 1.25 safety</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<svg class="panel-art" style="display:none" aria-hidden="true"></svg>
+
+<nav>
+  <button class="on" data-tab="calc" type="button">CALCULATOR</button>
+  <button data-tab="about" type="button">ABOUT</button>
+</nav>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var panelSvg='<svg viewBox="0 0 120 70" width="110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="skewX(-12)"><rect x="18" y="6" width="84" height="50" rx="3" fill="#1d3a8a" stroke="#9db7ff" stroke-width="1.5"/><path d="M18 31H102M46 6V56M74 6V56" stroke="#9db7ff" stroke-width="1"/></g><path d="M40 56L30 68M78 56L88 68" stroke="#8b97b8" stroke-width="2"/></svg>';
+
+  document.querySelectorAll('nav button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('nav button').forEach(function(x){x.classList.toggle('on',x===b)});
+      document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('on',v.id===b.dataset.tab)});
+      window.scrollTo(0,0);
+    });
+  });
+
+  function n(id){var v=parseFloat($(id).value);return isFinite(v)?v:NaN}
+  function f(x,d){return x.toLocaleString(undefined,{maximumFractionDigits:d==null?0:d})}
+
+  $('go').addEventListener('click',function(){
+    var kwh=n('kwh'),psh=n('psh'),eff=n('loss'),wp=n('wp'),sv=n('sv'),
+        bv=n('bv'),bah=n('bah'),dod=n('dod'),peak=n('peak');
+    var dd=n('days'),bh=n('bhrs'),bm=n('bmin');
+    var days=(isFinite(dd)?dd:0)+(isFinite(bh)?bh:0)/24+(isFinite(bm)?bm:0)/1440;
+    var out=$('results');
+    var missing=[];
+    if(!(kwh>0))missing.push('Daily Energy Consumption');
+    if(!(psh>0))missing.push('Peak Sun Hours');
+    if(!(eff>0&&eff<=100))missing.push('System Efficiency (1–100%)');
+    if(!(bah>0))missing.push('Battery Capacity');
+    if(!(dod>0&&dod<=100))missing.push('Depth of Discharge (1–100%)');
+    if(!(days>0))missing.push('Backup Time');
+    if(missing.length){
+      out.innerHTML='<div class="err">Paki-ayos muna: '+missing.join(', ')+'.</div>';
+      return;
+    }
+    if(bv>sv){
+      out.innerHTML='<div class="err">Hindi puwedeng mas mataas ang battery voltage kaysa sa system voltage. Ibaba ang battery voltage o itaas ang system voltage.</div>';
+      return;
+    }
+    var wh=kwh*1000;
+    var arrayW=wh/(eff/100)/psh;
+    var html='';
+
+    html+='<div class="res"><h3>SOLAR ARRAY</h3><div class="big">'+f(arrayW)+'<small>W needed</small></div>';
+    if(wp>0){
+      var panels=Math.ceil(arrayW/wp);
+      html+='<div class="sub">'+panels+' × '+f(wp)+'Wp panels = '+f(panels*wp)+'W total</div>';
+    }else{
+      html+='<div class="sub">Ilagay ang wattage ng panel para makuha ang bilang ng panels.</div>';
+    }
+    html+='</div>';
+
+    var needWh=wh*days/(dod/100);
+    var needAh=needWh/bv;
+    var series=Math.ceil(sv/bv);
+    var parallel=Math.ceil(needAh/bah);
+    var total=series*parallel;
+    html+='<div class="res"><h3>BATTERY BANK</h3><div class="big">'+f(needWh/1000,2)+'<small>kWh usable-adjusted</small></div>'+
+      '<div class="row"><span>Required capacity</span><b>'+f(needAh)+' Ah @ '+bv+'V</b></div>'+
+      '<div class="row"><span>Series</span><b>'+series+'</b></div>'+
+      '<div class="row"><span>Parallel strings</span><b>'+parallel+'</b></div>'+
+      '<div class="row"><span>Total batteries</span><b>'+total+' × '+f(bah)+'Ah '+bv+'V</b></div>'+
+      '<div class="row"><span>Actual bank</span><b>'+f(parallel*bah)+'Ah @ '+sv+'V ('+f(parallel*bah*sv/1000,2)+' kWh)</b></div></div>';
+
+    var ctrl=arrayW/sv*1.25;
+    html+='<div class="res"><h3>CHARGE CONTROLLER (MPPT)</h3><div class="big">'+f(Math.ceil(ctrl))+'<small>A minimum @ '+sv+'V</small></div>'+
+      '<div class="note">Kasama na ang 25% safety margin.</div></div>';
+
+    html+='<div class="res"><h3>INVERTER</h3>';
+    if(peak>0){
+      html+='<div class="big">'+f(Math.ceil(peak*1.25/100)*100)+'<small>W minimum</small></div>'+
+        '<div class="note">Peak load '+f(peak)+'W × 1.25 safety. Mag-check din ng surge rating kung may motor (aircon, ref, pump).</div>';
+    }else{
+      html+='<div class="sub">Ilagay ang Peak Load (kabuuang watts ng sabay-sabay na appliances) para makuha ang inverter size.</div>';
+    }
+    html+='</div>';
+
+    out.innerHTML=html;
+    out.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  });
+
+  var apps=[];
+  var presets=[['LED bulb',10,1,5],['Electric fan',50,1,8],['TV',80,1,4],['Ref (inverter)',100,1,8],['Laptop',60,1,6],['Phone charger',10,1,3],['Rice cooker',600,1,1],['Aircon 1HP',900,1,6]];
+  function appTotals(){
+    var wh=0,pk=0;
+    apps.forEach(function(a){var q=a.q||0,w=a.w||0,h=(a.h||0)+(a.m||0)/60;wh+=q*w*h;pk+=q*w});
+    return {wh:wh,pk:pk};
+  }
+  function updateTot(){
+    var t=appTotals();
+    $('appTot').textContent=f(t.wh/1000,3)+' kWh/day · '+f(t.pk)+' W peak';
+  }
+  function num(v){var x=parseFloat(v);return isFinite(x)&&x>=0?x:0}
+  function renderApps(){
+    var list=$('appList');
+    list.innerHTML='';
+    apps.forEach(function(a,i){
+      var d=document.createElement('div');
+      d.className='app';
+      d.innerHTML='<div class="app-top"><input class="nm" type="text" placeholder="Pangalan ng appliance" aria-label="Pangalan ng appliance"><button type="button" class="rm" aria-label="Alisin">✕</button></div>'+
+        '<div class="app-grid"><div><label>Dami</label><input data-k="q" type="number" inputmode="decimal" min="0" step="any"></div>'+
+        '<div><label>Watts</label><input data-k="w" type="number" inputmode="decimal" min="0" step="any"></div>'+
+        '<div><label>Oras</label><input data-k="h" type="number" inputmode="decimal" min="0" max="24" step="any"></div>'+
+        '<div><label>Minuto</label><input data-k="m" type="number" inputmode="decimal" min="0" max="59" step="any"></div></div>';
+      var nm=d.querySelector('.nm');
+      nm.value=a.name;
+      nm.addEventListener('input',function(){a.name=nm.value});
+      d.querySelectorAll('[data-k]').forEach(function(inp){
+        var k=inp.dataset.k;
+        inp.value=a[k]===0?'':a[k];
+        inp.addEventListener('input',function(){a[k]=num(inp.value);updateTot()});
+      });
+      d.querySelector('.rm').addEventListener('click',function(){apps.splice(i,1);renderApps()});
+      list.appendChild(d);
+    });
+    updateTot();
+  }
+  presets.forEach(function(p){
+    var b=document.createElement('button');
+    b.type='button';b.className='chip';b.textContent='+ '+p[0];
+    b.addEventListener('click',function(){apps.push({name:p[0],w:p[1],q:p[2],h:p[3],m:0});renderApps()});
+    $('chips').appendChild(b);
+  });
+  $('addApp').addEventListener('click',function(){apps.push({name:'',w:0,q:1,h:0,m:0});renderApps()});
+  $('useApp').addEventListener('click',function(){
+    var t=appTotals();
+    if(!(t.wh>0)){return}
+    $('kwh').value=String(Math.round(t.wh)/1000);
+    $('peak').value=String(Math.round(t.pk));
+    $('kwh').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+  });
+
+  var card=document.querySelectorAll('#calc .card')[1];
+  var holder=document.createElement('div');
+  holder.className='panel-art';
+  holder.style.cssText='position:absolute;right:14px;top:128px;pointer-events:none;opacity:.9';
+  holder.innerHTML=panelSvg;
+  // place art beside the panel wattage / voltage row on wider screens only
+  if(window.innerWidth>=480){card.appendChild(holder)}
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
